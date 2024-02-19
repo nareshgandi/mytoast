@@ -1,0 +1,7 @@
+-- Add a new TOAST column to the table
+ALTER TABLE example_table2
+ADD COLUMN large_column_toast text;
+
+ALTER TABLE example_table2 ALTER COLUMN large_column_toast SET STORAGE EXTERNAL;
+
+UPDATE  example_table2 set large_column_toast = (SELECT repeat('a', 1000)::bytea);
