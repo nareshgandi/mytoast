@@ -1,0 +1,50 @@
+SELECT
+    table_name,
+    pg_size_pretty(total_table_size) AS total_size,
+    pg_size_pretty(table_size) AS main_table_size,
+    pg_size_pretty(index_size) AS index_size,
+    pg_size_pretty(toast_table_size) AS toast_table_size
+FROM (
+    SELECT
+        relname AS table_name,
+        pg_total_relation_size(relid) AS total_table_size,
+        pg_relation_size(relid) AS table_size,
+        pg_indexes_size(relid) AS index_size,
+        (
+            SELECT pg_relation_size(oid)
+            FROM pg_class
+            WHERE reltoastrelid = relid
+        ) AS toast_table_size
+    FROM pg_catalog.pg_statio_user_tables  where relname='example_table'
+) AS table_sizes;
+
+ SELECT
+    pg_size_pretty(pg_total_relation_size(reltoastrelid)) AS toast_table_size
+FROM
+    pg_catalog.pg_class
+WHERE
+    oid = 'public.example_table'::regclass;
+
+SELECT
+    relname AS toast_table_name,
+    relfilenode AS toast_table_filenode
+FROM
+    pg_class
+WHERE
+    relname LIKE 'pg_toast_%'
+    AND relnamespace = (
+        SELECT oid FROM pg_namespace WHERE nspname = 'public' -- Change 'public' to your schema name
+    );
+	
+SELECT
+    t.relname AS table_name,
+    tt.relname AS toast_table_name,
+    pg_relation_filepath(t.oid) AS table_filepath,
+    pg_relation_filepath(tt.oid) AS toast_table_filepath
+FROM
+    pg_class t
+JOIN
+    pg_class tt ON t.reltoastrelid = tt.oid
+WHERE
+    t.relname = 'example_table'; -- Replace 'your_table_name' with the name of your table
+
