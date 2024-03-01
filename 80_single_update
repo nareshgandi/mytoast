@@ -1,0 +1,49 @@
+import psycopg2
+from faker import Faker
+import time
+
+# Connect to PostgreSQL
+conn = psycopg2.connect(
+    dbname="postgres",
+    user="postgres",
+    password="postgres",
+    host="localhost",
+    port="5432"
+)
+
+# Create a cursor
+cur = conn.cursor()
+
+# Measure the start time
+start_time = time.time()
+
+# Generate random text for updating
+fake = Faker()
+
+# Get the total number of rows in the table
+cur.execute("SELECT COUNT(*) FROM example_table")
+total_rows = cur.fetchone()[0]
+
+# Choose the column to update
+column_to_update = "column_1"  # Change this to the desired column name
+
+# Update the chosen column with random text
+update_query = f"UPDATE example_table SET {column_to_update} = %s"
+update_data = [(fake.text(),) for _ in range(total_rows)]
+cur.executemany(update_query, update_data)
+
+# Commit the transaction
+conn.commit()
+
+# Measure the end time
+end_time = time.time()
+
+# Calculate the total elapsed time
+total_elapsed_time = end_time - start_time
+
+# Close the cursor and connection
+cur.close()
+conn.close()
+
+# Print the time taken for the update
+print(f"Update completed in {total_elapsed_time:.2f} seconds")
